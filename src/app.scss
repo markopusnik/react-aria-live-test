@@ -1,0 +1,39 @@
+legend {
+  padding: 4px 0;
+  font-weight: 700;
+}
+
+.off {
+  clip: rect(1px, 1px, 1px, 1px);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.component {
+  padding: 8px;
+  margin: 8px;
+  border-style: solid;
+  border-width: 1px;
+  &-proxy {
+    border-color: green;
+  }
+  &-live {
+    border-color: blue;
+  }
+  &-message {
+    border-color: red;
+  }
+  &-group {
+    border-color: black;
+  }
+}
+
+.message {
+  margin-top: 4px;
+  padding: 0 4px;
+  border: 1px solid grey;
+}
+

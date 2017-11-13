@@ -1,0 +1,281 @@
+'use strict';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { LiveAnnouncer, LiveMessage } from 'react-aria-live';
+
+export default function createCounter() {
+    const _counter = {};
+
+    return function(id) {
+        if (!id) {
+            return null;
+        }
+        return _counter[id] ? _counter[id] += 1 : _counter[id] = 1;
+    };
+}
+
+const counter = createCounter();
+
+const m = (message, dissable) => dissable ? message : `${message} message #${counter(message)}`;
+
+class Live extends React.Component {
+
+    constructor(props) {
+        console.log('message/constructor');
+        super(props);
+        this.state = {
+            message: m(props.type),
+            enabled: true,
+            timer: ''
+        };
+        this.buttonHandler = this.buttonHandler.bind(this);
+        this.switchHandler = this.switchHandler.bind(this);
+        this.timerHandler = this.timerHandler.bind(this);
+    }
+
+    shouldComponentUpdate(nextProps, nextState) {
+        return nextState.message !== this.state.message || nextState.enabled !== this.state.enabled || nextState.timer !== this.state.timer;;
+    }
+
+    componentWillUpdate(nextProps, nextState) {
+        if (nextState.timer !== this.state.timer) {
+            if (this.intervalId) clearInterval(this.intervalId);
+            if (nextState.timer) this.intervalId = setInterval(this.buttonHandler, nextState.timer * 1000);
+        }
+    }
+
+    componentWillUnmount() {
+        if (this.intervalId) clearInterval(this.intervalId);
+    }
+
+    buttonHandler() {
+        if (this.state.enabled) {
+            console.log('message/click', this.props.type);
+            this.setState({ message: m(this.props.type) });
+        }
+    }
+
+    switchHandler(e) {
+        console.log('message/switch', this.props.type, e.target.checked);
+        this.setState({ enabled: e.target.checked });
+    };
+
+
+    timerHandler(e, value) {
+        console.log('message/timer', this.props.message, e.target.value);
+        this.setState({ timer: e.target.value });
+    }
+
+    render() {
+        console.log('message/render', this.props.type, this.state.message);
+        return (
+            <fieldset>
+                {this.state.enabled &&
+                <LiveMessage
+                    message={this.state.message}
+                    aria-live={this.props.type}
+                />}
+                <input
+                    type="checkbox"
+                    defaultChecked
+                    onChange={this.switchHandler}
+                />
+                switch&nbsp;
+                <button
+                    type="button"
+                    disabled={!this.state.enabled}
+                    onClick={this.buttonHandler}>
+                    {`Click for ${this.props.type} message`}
+                </button>
+                <input
+                    type="number" placeholder="timer 1..20" step="1" min="1" max="20"
+                    value={this.state.value}
+                    onChange={this.timerHandler}
+                />
+            </fieldset>
+        );
+    }
+}
+
+const Polite = (props) => <Live type={'polite'} {...props}/>;
+const Assertive = (props) => <Live type={'assertive'} {...props}/>;
+
+
+class Message extends React.Component {
+
+    constructor(props) {
+        console.log('message/constructor');
+        super(props);
+        const message = m(props.message, this.props.disableM);
+        this.state = {
+            message: message,
+            message1: message,
+            message2: '',
+            enabled: true,
+            timer: false,
+            option: 'duplicated'
+        };
+        this.buttonHandler = this.buttonHandler.bind(this);
+        this.switchHandler = this.switchHandler.bind(this);
+        this.optionHandler = this.optionHandler.bind(this);
+        this.timerHandler = this.timerHandler.bind(this);
+    }
+
+    componentWillReciveProps(nextProps) {
+        if (nextProps.message !== this.props.message) {
+            const message = m(props.message, this.props.disableM);
+            this.setState({
+                message,
+                message1: this.state.message1 ? '' : message,
+                message2: this.state.message1 ? message : ''
+            });
+        }
+    }
+
+    shouldComponentUpdate(nextProps, nextState) {
+        return nextState.message !== this.state.message
+            || nextState.enabled !== this.state.enabled
+            || nextState.option !== this.state.option
+            || nextState.timer !== this.state.timer;
+    }
+
+    componentWillUpdate(nextProps, nextState) {
+        if (nextState.timer !== this.state.timer) {
+            if (this.intervalId) clearInterval(this.intervalId);
+            if (nextState.timer) this.intervalId = setInterval(this.buttonHandler, nextState.timer * 1000);
+        }
+    }
+
+    componentWillUnmount() {
+        if (this.intervalId) clearInterval(this.intervalId);
+    }
+
+    buttonHandler() {
+        if (this.state.enabled) {
+            console.log('message/click', this.props.message);
+            const message = m(this.props.message, this.props.disableM);
+            this.setState({
+                message,
+                message1: this.state.message1 ? '' : message,
+                message2: this.state.message1 ? message : ''
+            });
+        }
+    }
+
+    switchHandler(e) {
+        console.log('message/switch', this.props.message, e.target.checked);
+        this.setState({ enabled: e.target.checked });
+    };
+
+    optionHandler(e) {
+        console.log('message/option', this.props.message, e.target.value);
+        this.setState({ option: e.target.value });
+    }
+
+    timerHandler(e) {
+        console.log('message/timer', this.props.message, e.target.value);
+        this.setState({ timer: e.target.value });
+    }
+
+    render() {
+        console.log('message/render','live', this.state.message);
+        return (
+            <fieldset>
+                {this.state.enabled && this.state.option === 'duplicated' &&
+                <div style={{
+                    clip: 'rect(1px, 1px, 1px, 1px)',
+                    height: '1px',
+                    overflow: 'hidden',
+                    position: 'absolute',
+                    whiteSpace: 'nowrap',
+                    width: '1px'
+                }}>
+                    <div role="log" aria-live="polite" aria-atomic="true" aria-relevant="all">
+                        {this.state.message1}
+                    </div>
+                    <div role="log" aria-live="polite" aria-atomic="true" aria-relevant="all">
+                        {this.state.message2}
+                    </div>
+                </div>}
+                {this.state.enabled && this.state.option === 'single' &&
+                <div style={{
+                    clip: 'rect(1px, 1px, 1px, 1px)',
+                    height: '1px',
+                    overflow: 'hidden',
+                    position: 'absolute',
+                    whiteSpace: 'nowrap',
+                    width: '1px'
+                }}>
+                    <div role="log" aria-live="polite" aria-atomic="true" aria-relevant="all">
+                        {this.state.message}
+                    </div>
+                </div>}
+                <input
+                    type="checkbox"
+                    defaultChecked
+                    onChange={this.switchHandler}
+                />
+                <button
+                    type="button"
+                    disabled={!this.state.enabled}
+                    onClick={this.buttonHandler}>
+                    {`Click for ${this.props.message} message`}
+                </button>
+                {!this.props.disableM &&
+                <select onChange={this.optionHandler} value={this.state.option}>
+                    <option value="single">single</option>
+                    <option value="duplicated">duplicated</option>
+                </select>}
+                {!this.props.disableM &&
+                <input
+                    type="number" placeholder="timer 1..20" step="1" min="1" max="20"
+                    value={this.state.value}
+                    onChange={this.timerHandler}
+                />}
+            </fieldset>
+        );
+    }
+}
+
+class MyApp extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            force: false
+        };
+        this.buttonHandler = this.buttonHandler.bind(this);
+    }
+
+    buttonHandler() {
+        console.log('MyApp/refresh');
+        this.setState({force: Math.random()});
+    }
+
+    render() {
+        console.log('MyApp/render');
+
+        const mk = m('keyed'),
+            mf = m('forced');
+
+        return (
+            <LiveAnnouncer>
+                <button
+                    type="button"
+                    onClick={this.buttonHandler}>
+                    {`Force render!`}
+                </button>
+                <Polite />
+                <Assertive />
+                <Message message="outer" />
+                <div>
+                    <Message message="inner" />
+                    <Message message={mf} disableM />
+                    <Message key={mk} message={mk} disableM />
+                </div>
+            </LiveAnnouncer>
+        );
+    }
+}
+
+ReactDOM.render(<MyApp />, document.getElementById('container'));
