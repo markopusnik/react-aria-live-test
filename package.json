@@ -6,7 +6,7 @@
     "name": "Marko Pusnik"
   },
   "license": "MIT",
-  "version": "0.1",
+  "version": "0.0.2",
   "main": "main.js",
   "scripts": {
     "start": "webpack-dev-server --progress --colors --hot --port 5000 --host 0.0.0.0",

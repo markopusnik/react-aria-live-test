@@ -29,7 +29,10 @@ class LiveMessageProxy extends React.Component {
         this.state = {
             message: m(props.type),
             enabled: true,
-            timer: props.timer
+            timer: props.timer,
+            formId: i('form'),
+            switchId: i('switch'),
+            timerId: i('timer')
         };
         if (props.timer) this.intervalId = setInterval(this.buttonHandler, props.timer * 1000);
         this.buttonHandler = this.buttonHandler.bind(this);
@@ -72,10 +75,7 @@ class LiveMessageProxy extends React.Component {
 
     render() {
         const { type } = this.props,
-            { enabled, message, timer } = this.state,
-            formId = i('form'),
-            switchId = i('switch'),
-            timerId = i('timer');
+            { enabled, message, timer, formId, switchId, timerId } = this.state;
         return (
             <div className={'component component-proxy'}>
                 {this.state.enabled &&
@@ -126,6 +126,8 @@ class MessageGenerator extends React.Component {
         this.state = {
             message: m(props.message),
             timer: props.timer,
+            formId: i('form'),
+            timerId: i('timer')
         };
         if (props.timer) this.intervalId = setInterval(() => this.alterMessage(props.message), props.timer * 1000);
         this.buttonHandler = this.buttonHandler.bind(this);
@@ -171,9 +173,7 @@ class MessageGenerator extends React.Component {
 
     render() {
         const { children } = this.props,
-            { message, timer } = this.state,
-            formId = i('form'),
-            timerId = i('timer');
+            { message, timer, formId, timerId } = this.state;
 
         return (
             <div className={'component component-message'}>
@@ -212,13 +212,22 @@ class LiveRegion extends React.Component {
             message,
             message1: message,
             message2: '',
+            messageArray: [<div key={message}>{message}</div>],
             type,
             enabled: !disabled,
             role,
             ariaLive,
             ariaAtomic,
             ariaRelevant,
-            ariaBusyEnabled: !ariaBusyDisabled
+            ariaBusyEnabled: !ariaBusyDisabled,
+            formId: i('form'),
+            switchId: i('switch'),
+            typeId: i('timer'),
+            roleId: i('timer'),
+            ariaLiveId: i('timer'),
+            ariaAtomicId: i('timer'),
+            ariaRelevantId: i('timer'),
+            busyId: i('busy')
         };
         this.switchHandler = this.switchHandler.bind(this);
         this.typeHandler = this.typeHandler.bind(this);
@@ -237,8 +246,10 @@ class LiveRegion extends React.Component {
         if (nextProps.message !== this.props.message || nextProps.prefix !== this.props.prefix) {
             const { prefix, children } = nextProps,
                 message = `${prefix} ${nextProps.message}`;
+            this.state.messageArray.push(<div key={message}>{message}</div>);
+            this.state.messageArray.splice(0, this.state.messageArray.length - 2);
             this.setState({
-                message,
+                message: message,
                 message1: this.state.message1 ? '' : message,
                 message2: this.state.message1 ? message : '',
                 ariaBusy: this.state.ariaBusyEnabled
@@ -297,17 +308,11 @@ class LiveRegion extends React.Component {
         this.setState({ ariaBusyEnabled: e.target.checked });
     };
 
-
     render() {
-        const { message, message1, message2, enabled, type, role, ariaLive, ariaAtomic, ariaRelevant, ariaBusyEnabled, ariaBusy } = this.state,
-            formId = i('form'),
-            switchId = i('switch'),
-            typeId = i('timer'),
-            roleId = i('timer'),
-            ariaLiveId = i('timer'),
-            ariaAtomicId = i('timer'),
-            ariaRelevantId = i('timer'),
-            busyId = i('busy');
+        const { message, message1, message2, messageArray, enabled, type,
+            role, ariaLive, ariaAtomic, ariaRelevant, ariaBusyEnabled, ariaBusy,
+            formId, switchId, typeId, roleId, ariaLiveId, ariaAtomicId, ariaRelevantId, busyId} = this.state;
+
 
         const ariaProps = { };
         if (ariaBusyEnabled) ariaProps['aria-busy'] = ariaBusy;
@@ -331,6 +336,20 @@ class LiveRegion extends React.Component {
                 <OffDiv {...ariaProps}>
                     {message}
                 </OffDiv>}
+                {enabled && type === 'div' &&
+                <OffDiv {...ariaProps}>
+                    <div key="message">{message}</div>
+                </OffDiv>}
+                {enabled && type === 'keyed-div' &&
+                <OffDiv {...ariaProps}>
+                    <div key={message}>{message}</div>
+                </OffDiv>}
+                {enabled && type === 'array' &&
+                <OffDiv {...ariaProps}>
+                    {messageArray}
+                </OffDiv>}
+                {enabled && type === 'html' &&
+                <OffDiv {...ariaProps} dangerouslySetInnerHTML={{__html: message}} />}
                 <form aria-labelledby={formId}>
                     <legend id={formId}>LiveRegion</legend>
                     <label htmlFor={switchId}>Switch:</label>
@@ -344,6 +363,10 @@ class LiveRegion extends React.Component {
                     <select onChange={this.typeHandler} value={type} id={typeId}>
                         <option>single</option>
                         <option>duplicated</option>
+                        <option>div</option>
+                        <option>keyed-div</option>
+                        <option>array</option>
+                        <option>html</option>
                     </select>
                     <label htmlFor={roleId}>role:</label>
                     <select onChange={this.roleHandler} value={role} id={roleId}>
