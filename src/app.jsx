@@ -227,7 +227,8 @@ class LiveRegion extends React.Component {
             ariaLiveId: i('timer'),
             ariaAtomicId: i('timer'),
             ariaRelevantId: i('timer'),
-            busyId: i('busy')
+            busyId: i('busy'),
+            display: type === 'toggle-display' ? 'none' : ''
         };
         this.switchHandler = this.switchHandler.bind(this);
         this.typeHandler = this.typeHandler.bind(this);
@@ -240,11 +241,12 @@ class LiveRegion extends React.Component {
 
     componentDidMount() {
         if (this.state.ariaBusyEnabled) this.setState({ariaBusy: false});
+        if (this.state.display === 'none') this.setState({display: 'block'})
     }
 
     componentWillReceiveProps(nextProps) {
         if (nextProps.message !== this.props.message || nextProps.prefix !== this.props.prefix) {
-            const { prefix, children } = nextProps,
+            const { prefix, type } = nextProps,
                 message = `${prefix} ${nextProps.message}`;
             this.state.messageArray.push(<div key={message}>{message}</div>);
             this.state.messageArray.splice(0, this.state.messageArray.length - 2);
@@ -252,11 +254,15 @@ class LiveRegion extends React.Component {
                 message: message,
                 message1: this.state.message1 ? '' : message,
                 message2: this.state.message1 ? message : '',
-                ariaBusy: this.state.ariaBusyEnabled
+                ariaBusy: this.state.ariaBusyEnabled,
+                display: this.state.type === 'toggle-display' ? 'none' : ''
             });
         }
         if (nextProps.type !== this.props.type) {
-            this.setState({type: nextProps.type})
+            this.setState({
+                type: nextProps.type,
+                display: type === 'toggle-display' ? 'none' : ''
+            })
         }
         if (nextProps.disabled !== this.props.disabled) {
             this.setState({enabled: !nextProps.disabled})
@@ -273,11 +279,13 @@ class LiveRegion extends React.Component {
             || nextState.ariaAtomic !== this.state.ariaAtomic
             || nextState.ariaRelevant !== this.state.ariaRelevant
             || nextState.ariaBusyEnabled !== this.state.ariaBusyEnabled
-            || nextState.ariaBusy !== this.state.ariaBusy;
+            || nextState.ariaBusy !== this.state.ariaBusy
+            || nextState.display !== this.state.display;
     }
 
     componentDidUpdate() {
         if (this.state.ariaBusyEnabled) this.setState({ariaBusy: false});
+        if (this.state.display === 'none') this.setState({display: 'block'})
     }
 
     switchHandler(e) {
@@ -285,7 +293,7 @@ class LiveRegion extends React.Component {
     };
 
     typeHandler(e) {
-        this.setState({ type: e.target.value });
+        this.setState({type: e.target.value});
     }
 
     roleHandler(e) {
@@ -311,8 +319,10 @@ class LiveRegion extends React.Component {
     render() {
         const { message, message1, message2, messageArray, enabled, type,
             role, ariaLive, ariaAtomic, ariaRelevant, ariaBusyEnabled, ariaBusy,
-            formId, switchId, typeId, roleId, ariaLiveId, ariaAtomicId, ariaRelevantId, busyId} = this.state;
+            formId, switchId, typeId, roleId, ariaLiveId, ariaAtomicId, ariaRelevantId,
+            busyId, display} = this.state;
 
+        console.log('liveRegion/render', message, type, display);
 
         const ariaProps = { };
         if (ariaBusyEnabled) ariaProps['aria-busy'] = ariaBusy;
@@ -320,6 +330,9 @@ class LiveRegion extends React.Component {
         if (ariaLive !== '[disabled]') ariaProps['aria-live'] = ariaLive;
         if (ariaAtomic !== '[disabled]') ariaProps['aria-atomic'] = ariaAtomic;
         if (ariaRelevant !== '[disabled]') ariaProps['aria-relevant'] = ariaRelevant;
+
+        const style = { };
+        if (display) style.display = display;
 
         return (
             <div className={'component component-live'}>
@@ -340,16 +353,20 @@ class LiveRegion extends React.Component {
                 <OffDiv {...ariaProps}>
                     <div key="message">{message}</div>
                 </OffDiv>}
-                {enabled && type === 'keyed-div' &&
+                {enabled && type === 'keyed' &&
                 <OffDiv {...ariaProps}>
-                    <div key={message}>{message}</div>
+                    <span key={message}>{message}</span>
                 </OffDiv>}
                 {enabled && type === 'array' &&
                 <OffDiv {...ariaProps}>
                     {messageArray}
                 </OffDiv>}
-                {enabled && type === 'html' &&
+                {enabled && type === 'inner-html' &&
                 <OffDiv {...ariaProps} dangerouslySetInnerHTML={{__html: message}} />}
+                {enabled && type === 'toggle-display' &&
+                <OffDiv {...ariaProps} style={style}>
+                    {message}
+                </OffDiv>}
                 <form aria-labelledby={formId}>
                     <legend id={formId}>LiveRegion</legend>
                     <label htmlFor={switchId}>Switch:</label>
@@ -364,9 +381,10 @@ class LiveRegion extends React.Component {
                         <option>single</option>
                         <option>duplicated</option>
                         <option>div</option>
-                        <option>keyed-div</option>
+                        <option>keyed</option>
                         <option>array</option>
-                        <option>html</option>
+                        <option>inner-html</option>
+                        <option>toggle-display</option>
                     </select>
                     <label htmlFor={roleId}>role:</label>
                     <select onChange={this.roleHandler} value={role} id={roleId}>
