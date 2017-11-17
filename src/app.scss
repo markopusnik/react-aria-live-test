@@ -29,11 +29,16 @@ legend {
   &-group {
     border-color: black;
   }
+  &-status {
+    border-style: dotted;
+    border-color: black;
+  }
 }
 
 .message {
   margin-top: 4px;
   padding: 0 4px;
   border: 1px solid grey;
+  min-height: 1em;
 }
 
